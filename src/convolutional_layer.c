@@ -173,7 +173,10 @@ void cudnn_convolutional_setup(layer *l)
 #endif
 #endif
 
-convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int n, int groups, int size, int stride, int padding, ACTIVATION activation, int batch_normalize, int binary, int xnor, int adam)
+convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int n, int groups,
+                                            int size, int stride, int padding, 
+                                            ACTIVATION activation, int batch_normalize,
+                                            int binary, int xnor, int adam)
 {
     int i;
     convolutional_layer l = {0};
@@ -206,7 +209,9 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     //printf("convscale %f\n", scale);
     //scale = .02;
     //for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_uniform(-1, 1);
+    //使用标准正太分布初始化权重
     for(i = 0; i < l.nweights; ++i) l.weights[i] = scale*rand_normal();
+    //根据输入大小和过滤器的尺寸分别计算输出的尺寸
     int out_w = convolutional_out_width(l);
     int out_h = convolutional_out_height(l);
     l.out_h = out_h;
@@ -218,6 +223,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     l.output = calloc(l.batch*l.outputs, sizeof(float));
     l.delta  = calloc(l.batch*l.outputs, sizeof(float));
 
+    //分别初始化不同层结构的前向、反向以及更新函数
     l.forward = forward_convolutional_layer;
     l.backward = backward_convolutional_layer;
     l.update = update_convolutional_layer;
@@ -449,8 +455,10 @@ void forward_convolutional_layer(convolutional_layer l, network net)
     fill_cpu(l.outputs*l.batch, 0, l.output, 1);
 
     if(l.xnor){
+        //求权重的二值化，关于二值化可以参考XNOR-Net相关文献
         binarize_weights(l.weights, l.n, l.c/l.groups*l.size*l.size, l.binary_weights);
         swap_binary(&l);
+        //求输入的二值化
         binarize_cpu(net.input, l.c*l.h*l.w*l.batch, l.binary_input);
         net.input = l.binary_input;
     }
@@ -491,6 +499,7 @@ void backward_convolutional_layer(convolutional_layer l, network net)
     int n = l.size*l.size*l.c/l.groups;
     int k = l.out_w*l.out_h;
 
+    //计算每个权重对output的偏导
     gradient_array(l.output, l.outputs*l.batch, l.activation, l.delta);
 
     if(l.batch_normalize){

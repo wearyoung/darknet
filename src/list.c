@@ -42,7 +42,7 @@ void list_insert(list *l, void *val)
 	node *new = malloc(sizeof(node));
 	new->val = val;
 	new->next = 0;
-
+	//双向列表尾插法
 	if(!l->back){
 		l->front = new;
 		new->prev = 0;

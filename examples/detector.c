@@ -561,11 +561,14 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
 
 void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen)
 {
+    //读取数据配置文件
     list *options = read_data_cfg(datacfg);
     char *name_list = option_find_str(options, "names", "data/names.list");
     char **names = get_labels(name_list);
 
+    //加载字体编码，要修改为中文的话，需要自己制作字符编码
     image **alphabet = load_alphabet();
+    //根据模型框架配置文件创建模型，如果指定预训练权重文件，则使用预训练数据初始化权重
     network *net = load_network(cfgfile, weightfile, 0);
     set_batch_network(net, 1);
     srand(2222222);
@@ -793,17 +796,25 @@ void network_detect(network *net, image im, float thresh, float hier_thresh, flo
 
 void run_detector(int argc, char **argv)
 {
+    //-prefix参数的作用：
     char *prefix = find_char_arg(argc, argv, "-prefix", 0);
-    float thresh = find_float_arg(argc, argv, "-thresh", .5);
+    //-thresh参数的作用：只输出满足阈值的检测结果，训练中用于决定哪些预测是合理的
+    float thresh = find_float_arg(argc, argv, "-thresh", .24);
+    //-hier参数的作用：在yolo9000预测中决定从父类别往下寻找最底层且满足该阈值的子类别作为预测结果
     float hier_thresh = find_float_arg(argc, argv, "-hier", .5);
+    //-c参数的作用：指定获取实时流的摄像头id
     int cam_index = find_int_arg(argc, argv, "-c", 0);
+    //-s参数的作用：指定获取实时流时跳过多少帧取一帧
     int frame_skip = find_int_arg(argc, argv, "-s", 0);
+    //-avg参数的作用：？？？
     int avg = find_int_arg(argc, argv, "-avg", 3);
     if(argc < 4){
         fprintf(stderr, "usage: %s %s [train/test/valid] [cfg] [weights (optional)]\n", argv[0], argv[1]);
         return;
     }
+    //-gpus：执行训练或测试使用的gpu索引，可指定多个
     char *gpu_list = find_char_arg(argc, argv, "-gpus", 0);
+    //-out：指定带检测结果的图片的保存文件
     char *outfile = find_char_arg(argc, argv, "-out", 0);
     int *gpus = 0;
     int gpu = 0;
@@ -827,10 +838,15 @@ void run_detector(int argc, char **argv)
         ngpus = 1;
     }
 
+    //-clear参数的作用：清空预训练的参数内容？？？
     int clear = find_arg(argc, argv, "-clear");
+    //-fullscreen参数的作用：实时展示视频流时是否全屏
     int fullscreen = find_arg(argc, argv, "-fullscreen");
+    //-w参数的作用：实时展示视频流时每帧的宽度
     int width = find_int_arg(argc, argv, "-w", 0);
+    //-h参数的作用：实时展示视频流时每帧的高度
     int height = find_int_arg(argc, argv, "-h", 0);
+    //-w参数的作用：？？？
     int fps = find_int_arg(argc, argv, "-fps", 0);
     //int class = find_int_arg(argc, argv, "-class", 0);
 
@@ -838,6 +854,7 @@ void run_detector(int argc, char **argv)
     char *cfg = argv[4];
     char *weights = (argc > 5) ? argv[5] : 0;
     char *filename = (argc > 6) ? argv[6]: 0;
+    //测试已训练模型的精度
     if(0==strcmp(argv[2], "test")) test_detector(datacfg, cfg, weights, filename, thresh, hier_thresh, outfile, fullscreen);
     else if(0==strcmp(argv[2], "train")) train_detector(datacfg, cfg, weights, gpus, ngpus, clear);
     else if(0==strcmp(argv[2], "valid")) validate_detector(datacfg, cfg, weights, outfile);

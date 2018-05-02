@@ -7,6 +7,7 @@
 #include "layer.h"
 #include "network.h"
 
+//此处在基本结构体layer上定义不同层的方法有些面向对象继承和多态的意思
 typedef layer convolutional_layer;
 
 #ifdef GPU

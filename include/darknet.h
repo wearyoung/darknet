@@ -40,16 +40,22 @@ typedef struct{
 metadata get_metadata(char *file);
 
 typedef struct{
-    int *leaf;
-    int n;
-    int *parent;
-    int *child;
-    int *group;
-    char **name;
+    int n;          //节点总数,即类个数
+    /*
+    下面是每个节点的信息
+    */
+    int *leaf;              //用来表示第i个节点是不是叶子节点
+    int *parent;            //第i节点的父节点位置
+    int *child;             //最后一个子节点的位置
+    int *group;             //每个节点所属组的位置
+    char **name;            //每个节点的id或者名字
 
-    int groups;
-    int *group_size;
-    int *group_offset;
+    /*
+    下面是组信息
+    */
+    int groups;             //总共有多少组
+    int *group_size;        //每个组的节点个数
+    int *group_offset;      //每个组内第一个节点的位置
 } tree;
 tree *read_tree(char *filename);
 
@@ -427,13 +433,13 @@ typedef enum {
 } learning_rate_policy;
 
 typedef struct network{
-    int n;
+    int n;                                  //网络层数
     int batch;
     size_t *seen;
     int *t;
     float epoch;
     int subdivisions;
-    layer *layers;
+    layer *layers;                          //动态创建的所有网络层数组
     float *output;
     learning_rate_policy policy;
 
@@ -473,7 +479,7 @@ typedef struct network{
     float hue;
     int random;
 
-    int gpu_index;
+    int gpu_index;                             //需要用到的gpu索引
     tree *hierarchy;
 
     float *input;

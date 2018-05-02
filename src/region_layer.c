@@ -124,6 +124,7 @@ void delta_region_class(float *output, float *delta, int index, int class, int c
             delta[index + stride*class] = scale * (1 - output[index + stride*class]);
 
             class = hier->parent[class];
+            printf("parent: %s\n", class);
         }
         *avg_cat += pred;
     } else {
@@ -420,7 +421,9 @@ void get_region_detections(layer l, int w, int h, int netw, int neth, float thre
                     }
                 } else {
                     int j =  hierarchy_top_prediction(predictions + class_index, l.softmax_tree, tree_thresh, l.w*l.h);
+                    //scale是什么，为什么不使用predictions中经过层级计算的概率
                     dets[index].prob[j] = (scale > thresh) ? scale : 0;
+                    printf("max index: %d, max parent index%d\n", j, l.softmax_tree->parent[j]);
                 }
             } else {
                 if(dets[index].objectness){

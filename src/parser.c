@@ -176,14 +176,22 @@ layer parse_deconvolutional(list *options, size_params params)
 
 convolutional_layer parse_convolutional(list *options, size_params params)
 {
+    //卷积层的过滤器数量
     int n = option_find_int(options, "filters",1);
+    //过滤器的尺寸，这里默认使用长宽都是size的过滤器
     int size = option_find_int(options, "size",1);
+    //过滤器卷积的步长
     int stride = option_find_int(options, "stride",1);
+    //是否支持padding
     int pad = option_find_int_quiet(options, "pad",0);
+    //pading的大小
     int padding = option_find_int_quiet(options, "padding",0);
+    //分组卷积，向alexnet中使用的一样？？
     int groups = option_find_int_quiet(options, "groups", 1);
+    //如果支持padding的话，padding的尺寸为size的一般取整，为什么这样取？？？
     if(pad) padding = size/2;
 
+    //激活函数
     char *activation_s = option_find_str(options, "activation", "logistic");
     ACTIVATION activation = get_activation(activation_s);
 
@@ -193,11 +201,16 @@ convolutional_layer parse_convolutional(list *options, size_params params)
     c = params.c;
     batch=params.batch;
     if(!(h && w && c)) error("Layer before convolutional layer must output image.");
+    //是否支持batch normalization
     int batch_normalize = option_find_int_quiet(options, "batch_normalize", 0);
+    //二值化
     int binary = option_find_int_quiet(options, "binary", 0);
+    //异或二值化
     int xnor = option_find_int_quiet(options, "xnor", 0);
 
-    convolutional_layer layer = make_convolutional_layer(batch,h,w,c,n,groups,size,stride,padding,activation, batch_normalize, binary, xnor, params.net->adam);
+    convolutional_layer layer = make_convolutional_layer(batch,h,w,c,n,groups,size,stride,
+                                                        padding,activation, batch_normalize,
+                                                        binary, xnor, params.net->adam);
     layer.flipped = option_find_int_quiet(options, "flipped", 0);
     layer.dot = option_find_float_quiet(options, "dot", 0);
 
@@ -646,8 +659,10 @@ void parse_net_options(list *options, network *net)
     net->learning_rate = option_find_float(options, "learning_rate", .001);
     net->momentum = option_find_float(options, "momentum", .9);
     net->decay = option_find_float(options, "decay", .0001);
+    //subdivisions参数的作用：？？？
     int subdivs = option_find_int(options, "subdivisions",1);
     net->time_steps = option_find_int_quiet(options, "time_steps",1);
+    //notruth参数的作用：？？？
     net->notruth = option_find_int_quiet(options, "notruth",0);
     net->batch /= subdivs;
     net->batch *= net->time_steps;
@@ -729,16 +744,20 @@ int is_network(section *s)
 
 network *parse_network_cfg(char *filename)
 {
+    //读取配置内容到链表结构中
     list *sections = read_cfg(filename);
     node *n = sections->front;
     if(!n) error("Config file has no sections");
+    //创建网络模型结构体
     network *net = make_network(sections->size - 1);
     net->gpu_index = gpu_index;
+    //params用于将前一层的输出作为输入传给下一层
     size_params params;
 
     section *s = (section *)n->val;
     list *options = s->options;
     if(!is_network(s)) error("First section must be [net] or [network]");
+    //使用读取的配置初始化网络每层参数
     parse_net_options(options, net);
 
     params.h = net->h;
@@ -875,6 +894,82 @@ network *parse_network_cfg(char *filename)
 
 list *read_cfg(char *filename)
 {
+    /*
+    以下面配置文件为例给出配置列表数据结构
+    ---------------------------
+    [net]
+    batch=1
+    width=416
+    height=416
+    momentum=0.9
+    decay=0.0005
+    learning_rate=0.001
+
+    [convolutional]
+    batch_normalize=1
+    filters=32
+    size=3
+    stride=1
+    pad=1
+    activation=leaky
+
+    [maxpool]
+    size=2
+    stride=2
+    ---------------------------
+                               —————————————————————————————————————————————————————————————————————————
+                              /                                                                         \
+                    list      |                                                                          |
+                -----------   |             node                             node                        V    node
+                | size = 3|   |     ----------------------          ----------------------          ----------------------
+     option---> | back----|---/     |       |     |      |          |       |     |      |          |       |     |      |
+                |         |<--------|--prev | val | next-|--------->|       | val | next |--------->|       | val | next | 
+                | font----|-------->|       |  |  |      |<---------|--prev |  |  |      |<---------|--prev |  |  |      |
+                -----------         -----------|----------          -----------|----------          -----------|----------
+                                               |                               |                               |
+                                               V                               V                               V
+                                             section                         section                         section
+                                          ---------------         ------------------------               ------------------ 
+                                          | type= [net] |         | type= [convolutional] |              | type= [maxpool] |
+                                          ---------------         -------------------------              -------------------
+                                          |   options   |         |       options         |              |   options       |
+                                          -------|-------          -------------|---------                -------|----------
+                                                 |                              |                                |
+                                                 V                              V                                V
+                                               list                            ...(略)                        ...(略)
+                                           ----------- 
+                                           |  size=6  | 
+                                           -----------
+                           ----------------|---back  |
+                           |               -----------
+                           |               |  front  |
+                           |               -----|-----
+                           |               ^    |
+                           |              /     V
+                           |              |     node
+                           |          ----|-----------------
+                           |          |   |   |      |      |          -------------------
+                           |          |  prev | next | val--|--------->|   use = 0        |
+                           |          |       |   |  |      |          -------------------         
+                           |          ------------|----------          |   key =  "batch" |
+                           |              ^       |                    --------------------
+                           |              |       |                    |     val =  "1"   |                  
+                           |              |       V                    --------------------
+                           |              |     node
+                           |          ----|-----------------
+                           |          |   |   |      |      |          -------------------
+                           |          |  prev | next | val--|--------->|   use = 0        |
+                           |          |       |   |  |      |          -------------------         
+                           |          ------------|----------          |   key =  "width" |
+                           |                      |                    --------------------
+                           |                      |                    |    val = "416"   |                  
+                           |                      V                    --------------------
+                           |------------------> ...(略)
+
+
+
+
+    */
     FILE *file = fopen(filename, "r");
     if(file == 0) file_error(filename);
     char *line;

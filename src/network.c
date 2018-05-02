@@ -47,6 +47,7 @@ load_args get_base_args(network *net)
     args.center = net->center;
     args.saturation = net->saturation;
     args.hue = net->hue;
+    
     return args;
 }
 

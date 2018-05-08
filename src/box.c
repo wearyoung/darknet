@@ -59,6 +59,7 @@ void do_nms_sort(detection *dets, int total, int classes, float thresh)
 {
     int i, j, k;
     k = total-1;
+    //先将objectness为0的放在最后
     for(i = 0; i <= k; ++i){
         if(dets[i].objectness == 0){
             detection swap = dets[i];
@@ -68,8 +69,10 @@ void do_nms_sort(detection *dets, int total, int classes, float thresh)
             --i;
         }
     }
+    //将objectness为0的排除在外
     total = k+1;
 
+    //对每个类的prob都进行排序
     for(k = 0; k < classes; ++k){
         for(i = 0; i < total; ++i){
             dets[i].sort_class = k;
@@ -80,6 +83,7 @@ void do_nms_sort(detection *dets, int total, int classes, float thresh)
             box a = dets[i].bbox;
             for(j = i+1; j < total; ++j){
                 box b = dets[j].bbox;
+                //去掉后续与dets[i]重叠度超过thresh，但是prob较低的box
                 if (box_iou(a, b) > thresh){
                     dets[j].prob[k] = 0;
                 }

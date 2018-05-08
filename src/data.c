@@ -1380,6 +1380,7 @@ void get_next_batch(data d, int n, int offset, float *X, float *y)
     for(j = 0; j < n; ++j){
         int index = offset + j;
         memcpy(X+j*d.X.cols, d.X.vals[index], d.X.cols*sizeof(float));
+        //标签拷贝到网络中
         if(y) memcpy(y+j*d.y.cols, d.y.vals[index], d.y.cols*sizeof(float));
     }
 }

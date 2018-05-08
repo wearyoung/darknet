@@ -235,7 +235,9 @@ image **load_alphabet()
     }
     return alphabets;
 }
-
+/*
+names: names.list文件中label对应的name
+*/
 void draw_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes)
 {
     int i,j;

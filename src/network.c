@@ -528,6 +528,7 @@ detection *make_network_boxes(network *net, float thresh, int *num)
 {
     layer l = net->layers[net->n - 1];
     int i;
+    //获取输出中所有box数量
     int nboxes = num_detections(net, thresh);
     if(num) *num = nboxes;
     detection *dets = calloc(nboxes, sizeof(detection));
@@ -560,6 +561,14 @@ void fill_network_boxes(network *net, int w, int h, float thresh, float hier, in
     }
 }
 
+/*
+参数：
+w:原图像的width
+h:原图像的height
+hier：对于yolo9000，从父类别向下寻找子类别时，置信度应该满足的阈值条件
+relative：是否采用相对坐标
+其他参数略
+*/
 detection *get_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, int *num)
 {
     detection *dets = make_network_boxes(net, thresh, num);

@@ -353,32 +353,52 @@ layer parse_yolo(list *options, size_params params)
 
 layer parse_region(list *options, size_params params)
 {
+    //表示一个坐标需要的参数数量，一般都是四个
     int coords = option_find_int(options, "coords", 4);
+    //类别数
     int classes = option_find_int(options, "classes", 20);
+    //anchor的数量
     int num = option_find_int(options, "num", 1);
 
     layer l = make_region_layer(params.batch, params.w, params.h, num, classes, coords);
     assert(l.outputs == params.inputs);
 
+    //???
     l.log = option_find_int_quiet(options, "log", 0);
+    //???
     l.sqrt = option_find_int_quiet(options, "sqrt", 0);
 
+    //???
     l.softmax = option_find_int(options, "softmax", 0);
+    //???
     l.background = option_find_int_quiet(options, "background", 0);
+    //???
     l.max_boxes = option_find_int_quiet(options, "max",30);
+    //???
     l.jitter = option_find_float(options, "jitter", .2);
+    //???
     l.rescore = option_find_int_quiet(options, "rescore",0);
 
+    //输出为正样本的阈值
     l.thresh = option_find_float(options, "thresh", .5);
+    //???
     l.classfix = option_find_int_quiet(options, "classfix", 0);
+    //???
     l.absolute = option_find_int_quiet(options, "absolute", 0);
+    //是否随机调整输入层尺寸，进行多尺寸训练
     l.random = option_find_int_quiet(options, "random", 0);
 
+    //anchor box中坐标误差在总误差中所占权重
     l.coord_scale = option_find_float(options, "coord_scale", 1);
+    //anchor box负责对象检测时，置信度误差在总误差中所占权重
     l.object_scale = option_find_float(options, "object_scale", 1);
+    //anchor box中负责对象检测时，置信度误差在总误差中所占权重
     l.noobject_scale = option_find_float(options, "noobject_scale", 1);
+    //???
     l.mask_scale = option_find_float(options, "mask_scale", 1);
+    //当前grip cell负责对象检测时， 推断类别误差在总误差中所占权重
     l.class_scale = option_find_float(options, "class_scale", 1);
+    //???
     l.bias_match = option_find_int_quiet(options, "bias_match",0);
 
     char *tree_file = option_find_str(options, "tree", 0);
@@ -396,6 +416,7 @@ layer parse_region(list *options, size_params params)
         }
         for(i = 0; i < n; ++i){
             float bias = atof(a);
+            //对于region layer来说，biases保存着使用聚类计算出的prior的bounding box的相对长宽
             l.biases[i] = bias;
             a = strchr(a, ',')+1;
         }

@@ -470,6 +470,7 @@ void forward_convolutional_layer(convolutional_layer l, network net)
         for(j = 0; j < l.groups; ++j){
             float *a = l.weights + j*l.nweights/l.groups;
             float *b = net.workspace;
+            //指定batch中group的输出位置
             float *c = l.output + (i*l.groups + j)*n*m;
             float *im =  net.input + (i*l.groups + j)*l.c/l.groups*l.h*l.w;
 
@@ -478,6 +479,8 @@ void forward_convolutional_layer(convolutional_layer l, network net)
             } else {
                 im2col_cpu(im, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b);
             }
+
+            //计算卷积层的卷积操作矩阵运算，即卷积层的前向传播
             gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
         }
     }

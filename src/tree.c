@@ -35,7 +35,11 @@ float get_hierarchy_probability(float *x, tree *hier, int c, int stride)
 }
 
 /*
-计算层级概率
+计算层级类别概率，此处仅仅计算的是条件概率，而不是最终的类别概率
+n: 类别数量classes
+hier：类别层级树结构体指针
+only_leaves: 是否只选择叶子类别
+stride：l.w*l.h
 */
 void hierarchy_predictions(float *predictions, int n, tree *hier, int only_leaves, int stride)
 {
@@ -43,7 +47,7 @@ void hierarchy_predictions(float *predictions, int n, tree *hier, int only_leave
     for(j = 0; j < n; ++j){
         int parent = hier->parent[j];
         if(parent >= 0){
-            predictions[j*stride] *= predictions[parent*stride]; 
+            predictions[j*stride] *= predictions[parent*stride];
         }
     }
     if(only_leaves){
@@ -65,7 +69,7 @@ int hierarchy_top_prediction(float *predictions, tree *hier, float thresh, int s
         float max = 0;
         int max_i = 0;
 
-        //一个组中寻找概率最大的节点
+        //在hier tree中从上往下的同一组中寻找概率最大的节点
         for(i = 0; i < hier->group_size[group]; ++i){
             int index = i + hier->group_offset[group];
             float val = predictions[(i + hier->group_offset[group])*stride];
@@ -75,8 +79,7 @@ int hierarchy_top_prediction(float *predictions, tree *hier, float thresh, int s
             }
         }
         /*如果概率最大节点的概率大于阈值的话，则在子节点中寻找最大概率,
-        此处的阈值并不是-thresh的阈值，而是-hier的阈值,
-        为什么要设置两个阈值，目前还没想明白？？？？猜测是为了控制
+        此处的阈值并不是-thresh的阈值，而是-hier的阈值, 为了控制
         要满足多大的阈值才允许选择该节点下的子节点
         */
         if(p*max > thresh){
@@ -89,7 +92,7 @@ int hierarchy_top_prediction(float *predictions, tree *hier, float thresh, int s
             return max_i;
         } else {
             //如果该节点的概率较低且该节点不是根节点，则返回父节点的位置
-            //此处为什么不使用以下简单的代码：return hier->parent[max];
+            //此处为什么不使用以下简单的代码：return hier->parent[max_i];
             return hier->parent[hier->group_offset[group]];
         }
     }

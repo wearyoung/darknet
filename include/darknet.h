@@ -136,14 +136,18 @@ struct layer{
     int batch;
     int forced;
     int flipped;
+    //一个batch的输入大小
     int inputs;
+    //一个batch的输出大小
     int outputs;
     int nweights;
     int nbiases;
     int extra;
     int truths;
+    //该层输入数据的尺寸和通道数
     int h,w,c;
     int out_h, out_w, out_c;
+    //每个grid cell的box数量
     int n;
     int max_boxes;
     int groups;
@@ -435,7 +439,7 @@ typedef enum {
 typedef struct network{
     int n;                                  //网络层数
     int batch;
-    size_t *seen;
+    size_t *seen;                           //训练已使用的图片数量
     int *t;
     float epoch;
     int subdivisions;
@@ -466,7 +470,7 @@ typedef struct network{
     int outputs;
     int truths;
     int notruth;
-    int h, w, c;
+    int h, w, c;                        //网络输入层的height、width和channel
     int max_crop;
     int min_crop;
     float max_ratio;
@@ -482,8 +486,8 @@ typedef struct network{
     int gpu_index;                             //需要用到的gpu索引
     tree *hierarchy;
 
-    float *input;
-    float *truth;
+    float *input;                       //网络的输入数据，即一个batch的resize后的图片
+    float *truth;                       //一个batch的图片对应的ground truth label 
     float *delta;
     float *workspace;
     int train;
@@ -524,10 +528,10 @@ typedef struct{
 typedef struct detection{
     box bbox;
     int classes;
-    float *prob;
+    float *prob;                //所有类别的概率数组，长度=classes
     float *mask;
     float objectness;
-    int sort_class;
+    int sort_class;             //对detection数组进行概率大小排序时使用
 } detection;
 
 typedef struct matrix{

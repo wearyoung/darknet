@@ -13,6 +13,16 @@ float im2col_get_pixel(float *im, int height, int width, int channels,
 
 //From Berkeley Vision's Caffe!
 //https://github.com/BVLC/caffe/blob/master/LICENSE
+/*
+data_im：输入数据
+channels：输入的通道数
+height：输入数据的高
+width：输入数据的宽
+ksize：卷积的尺寸
+stride：步长
+pad：padding大小
+data_col：net.workspace
+*/
 void im2col_cpu(float* data_im,
      int channels,  int height,  int width,
      int ksize,  int stride, int pad, float* data_col) 

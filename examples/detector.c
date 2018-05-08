@@ -494,9 +494,9 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
     fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
     srand(time(0));
 
-    list *plist = get_paths("data/coco_val_5k.list");
+    //list *plist = get_paths("data/coco_val_5k.list");
+    list *plist = get_paths("combine-data/VOCdata/test.txt");
     char **paths = (char **)list_to_array(plist);
-
     layer l = net->layers[net->n-1];
 
     int j, k;
@@ -517,13 +517,13 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         char *path = paths[i];
         image orig = load_image_color(path, 0, 0);
         image sized = resize_image(orig, net->w, net->h);
-        char *id = basecfg(path);
+        //char *id = basecfg(path);
         network_predict(net, sized.data);
         int nboxes = 0;
         detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, .5, 0, 1, &nboxes);
         if (nms) do_nms_obj(dets, nboxes, 1, nms);
 
-        char labelpath[4096];
+        char labelpath[4096] = {0};
         find_replace(path, "images", "labels", labelpath);
         find_replace(labelpath, "JPEGImages", "labels", labelpath);
         find_replace(labelpath, ".jpg", ".txt", labelpath);
@@ -553,9 +553,11 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         }
 
         fprintf(stderr, "%5d %5d %5d\tRPs/Img: %.2f\tIOU: %.2f%%\tRecall:%.2f%%\n", i, correct, total, (float)proposals/(i+1), avg_iou*100/total, 100.*correct/total);
-        free(id);
+        //free(id);
         free_image(orig);
         free_image(sized);
+        free(truth);
+        free_detections(dets, nboxes);
     }
 }
 
